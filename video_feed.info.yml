@@ -1,0 +1,6 @@
+name: Video Feed Module
+description: Creates a VOD (Videos On Demand) block which can be placed anywhere on the site.
+package: Custom
+
+type: module
+core_version_requirement: 9.x
