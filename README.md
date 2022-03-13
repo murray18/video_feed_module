@@ -33,4 +33,5 @@ This module uses a Views Query Plugin to make the Pac 12 VoD API available as th
   * Write a service for consuming the API and use that service to populate a custom block.
   * Use javascript to hit the API and only rely on Drupal for the configuration options.
 * There are pros and cons to all approaches but ulitately I decided to use the last approach as I figured it was most in spirit with the coding excersise.
+*
 
