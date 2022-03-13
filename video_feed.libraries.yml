@@ -1,0 +1,6 @@
+video-feed:
+  version: VERSION
+  js:
+    js/video-feed.js: {}
+  dependencies:
+    - core/drupal.ajax

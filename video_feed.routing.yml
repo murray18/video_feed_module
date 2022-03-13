@@ -1,0 +1,6 @@
+video_feed.video_feed_response:
+  path: '/video-feed-response'
+  defaults:
+    _controller: '\Drupal\video_feed\Controller\VideoFeedController::createVideoFeedResponse'
+  requirements:
+    _permission: 'access content'
