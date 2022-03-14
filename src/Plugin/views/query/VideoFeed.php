@@ -5,9 +5,9 @@ namespace Drupal\video_feed\Plugin\views\query;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use GuzzleHttp\ClientInterface;
 use Drupal\views\ViewExecutable;
 use Drupal\views\ResultRow;
-use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -98,12 +98,31 @@ class VideoFeed extends QueryPluginBase {
       // This is being logged 8 times per request. Why?
       $this->loggerFactory->get('video_feed')->info('Hit the pac 12 API');
 
+      // This checks for the presense of a sports filter and sets it up.
+      if (isset($this->where)) {
+        foreach ($this->where as $where_group => $where) {
+          foreach ($where['conditions'] as $condition) {
+            // Remove dot from beginning of the string.
+            $field_name = ltrim($condition['field'], '.');
+            $filters[$field_name] = $condition['value'];
+          }
+        }
+      }
+
+      // We currently only support sport, ignore any other filters that may be
+      // configured.
+      $sport = $filters['sports'] ?? $filters['sports'];
+
+      // This option sets the number of VoD to retrieve.
       $display_number = $this->options['vod_display_number'];
+
       $params = [
         'query' => [
           'pagesize' => $display_number,
+          'sports' => (int) $sport,
         ],
       ];
+
       $request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/vod', $params);
       $videos = json_decode($request->getBody()->getContents());
 
@@ -139,6 +158,35 @@ class VideoFeed extends QueryPluginBase {
         $view->result[] = new ResultRow($row);
       }
     }
+  }
+
+  /**
+   * Filter for our query plugin backend.
+   *
+   * @param string $group
+   *   The WHERE group to add these to.
+   * @param string $field
+   *   The name of the field to check.
+   * @param string $value
+   *   The value to test the field against.
+   * @param string $operator
+   *   The comparison operator, such as =, <, or >=.
+   */
+  public function addWhere($group, $field, $value = NULL, $operator = NULL) {
+    // Ensure all variants of 0 are actually 0. Thus '', 0 and NULL are all
+    // the default group.
+    if (empty($group)) {
+      $group = 0;
+    }
+    // Check for a group.
+    if (!isset($this->where[$group])) {
+      $this->setWhereGroup('AND', $group);
+    }
+    $this->where[$group]['conditions'][] = [
+      'field' => $field,
+      'value' => $value,
+      'operator' => $operator,
+    ];
   }
 
   /**
@@ -199,33 +247,12 @@ class VideoFeed extends QueryPluginBase {
    * {@inheritdoc}
    */
   public function buildOptionsForm(&$form, FormStateInterface $form_state) {
-    try {
-      // An improvement here would be to move this API call into its own plugin.
-      $sports_request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/sports');
-      $sports = json_decode($sports_request->getBody()->getContents())->sports;
-      $sports_name_array = ['all' => 'All'];
-      foreach ($sports as $sport) {
-        $sports_name_array[strval($sport->id)] = $sport->short_name;
-      }
-    }
-    catch (Exception $e) {
-      $message = 'There was an issue accessing an API endpoint. @error';
-      $this->loggerFactory->get('video_feed')->error($message, $e);
-    }
-
     $form['vod_display_number'] = [
       '#type' => 'number',
       '#title' => $this->t('Number of VoD to Display'),
       '#default_value' => $this->options['vod_display_number'],
       '#description' => $this->t('Set how many VoDs to display'),
     ];
-    $form['sport'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Select which sports to display'),
-      '#default_value' => $this->options['sport'],
-      '#options' => $sports_name_array,
-    ];
-
     parent::buildOptionsForm($form, $form_state);
   }
 

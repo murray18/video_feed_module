@@ -53,6 +53,9 @@ function video_feed_views_data() {
     'field' => [
       'id' => 'video_sports',
     ],
+    'filter' => [
+      'id' => 'sports',
+    ],
   ];
 
   return $data;
