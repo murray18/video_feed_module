@@ -90,7 +90,7 @@ class VideoFeed extends QueryPluginBase {
   public function execute(ViewExecutable $view) {
 
     // Sleep for 2 seconds to demonstrate the ajax capabilities.
-    sleep(0);
+    sleep(3);
 
     // @todo It might make sense to put these API calls into their own service
     // in case there's cause to reuse them elsewhere.
