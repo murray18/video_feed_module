@@ -97,7 +97,14 @@ class VideoFeed extends QueryPluginBase {
     try {
       // This is being logged 8 times per request. Why?
       $this->loggerFactory->get('video_feed')->info('Hit the pac 12 API');
-      $request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/vod');
+
+      $display_number = $this->options['vod_display_number'];
+      $params = [
+        'query' => [
+          'pagesize' => $display_number,
+        ],
+      ];
+      $request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/vod', $params);
       $videos = json_decode($request->getBody()->getContents());
 
       $schools_request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/schools');
