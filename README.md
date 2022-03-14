@@ -1,11 +1,9 @@
-[[_TOC_]]
-
 ### Introduction
 
 This module provides a block which loads a list of Pac 12 Videos on Demand via AJAX according to these [specifications](https://docs.google.com/document/d/1AYhUe6AtDEEXRzXm1h39r43u7LclSVybLLl7KcgJUNE/edit#).
 
 ### Requierments
-This module requires no modules outside of Drupal core.
+This module requires no modules outside of Drupal core. Tested for Drupal 9.3.7.
 
 ### Installation
 * Install as you would normally install a contributed Drupal module. Visit
@@ -15,7 +13,8 @@ This module requires no modules outside of Drupal core.
 Once installed a new block named `Video Feed Ajax Block` will be available. Place that block on any page on your Drupal 9 site to display a list of Videos on Demand.
 
 ### Architecture
-This module uses a Views Query Plugin to make the Pac 12 VoD API available as the backend of a view. It also creates a separate custom block to render the view via ajax.
+This module uses a Views Query Plugin to make the Pac 12 VoD API available as the backend of a view. It also creates a separate custom block to render the view via ajax. The view can be used to add the content anywhere on the site but if you want to use
+ajax to load the vidoes you must use the Ajax wrapper block.
 
 ### Development Notes
 * The first thing I had to do for this project was setup my tooling for Drupal.
@@ -29,3 +28,5 @@ This module uses a Views Query Plugin to make the Pac 12 VoD API available as th
   of Drupal development and satisfies the requirments in the spirit they
   were asked.
 
+### Questions
+* What kind of caching do we want for the VoD View (Tag based vs Time-based)?

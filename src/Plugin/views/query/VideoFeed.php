@@ -2,6 +2,7 @@
 
 namespace Drupal\video_feed\Plugin\views\query;
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\views\ViewExecutable;
@@ -89,7 +90,7 @@ class VideoFeed extends QueryPluginBase {
   public function execute(ViewExecutable $view) {
 
     // Sleep for 2 seconds to demonstrate the ajax capabilities.
-    sleep(2);
+    sleep(0);
 
     // @todo It might make sense to put these API calls into their own service
     // in case there's cause to reuse them elsewhere.
@@ -117,7 +118,12 @@ class VideoFeed extends QueryPluginBase {
         $school_names = $this->getSchoolName($schools->schools, $video);
         $sport_names = $this->getSportName($sports->sports, $video);
 
-        $row['thumbnail'] = $video->images->tiny;
+        $row['thumbnail'] = [
+          'tiny' => $video->images->tiny,
+          'small' => $video->images->small,
+          'medium' => $video->images->medium,
+          'large' => $video->images->large,
+        ];
         $row['title'] = $video->title;
         $row['duration'] = $video->duration;
         $row['schools'] = $school_names;
@@ -129,7 +135,7 @@ class VideoFeed extends QueryPluginBase {
   }
 
   /**
-   * Convert a school id to a name.
+   * Convert a school id to a name @todo add a test.
    *
    * @param object $schools
    *   The school class.
@@ -150,7 +156,7 @@ class VideoFeed extends QueryPluginBase {
   }
 
   /**
-   * Convert a sport id to a name.
+   * Convert a sport id to a name @todo add a test.
    *
    * @param object $sports
    *   The sport class.
@@ -168,6 +174,52 @@ class VideoFeed extends QueryPluginBase {
     }
 
     return $sport_names;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function defineOptions() {
+    $options = parent::defineOptions();
+    $options['vod_display_number'] = [
+      'default' => 10,
+    ];
+    $options['sport'] = ['default' => 'all'];
+    return $options;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildOptionsForm(&$form, FormStateInterface $form_state) {
+    try {
+      // An improvement here would be to move this API call into its own plugin.
+      $sports_request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/sports');
+      $sports = json_decode($sports_request->getBody()->getContents())->sports;
+      $sports_name_array = ['all' => 'All'];
+      foreach ($sports as $sport) {
+        $sports_name_array[strval($sport->id)] = $sport->short_name;
+      }
+    }
+    catch (Exception $e) {
+      $message = 'There was an issue accessing an API endpoint. @error';
+      $this->loggerFactory->get('video_feed')->error($message, $e);
+    }
+
+    $form['vod_display_number'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Number of VoD to Display'),
+      '#default_value' => $this->options['vod_display_number'],
+      '#description' => $this->t('Set how many VoDs to display'),
+    ];
+    $form['sport'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Select which sports to display'),
+      '#default_value' => $this->options['sport'],
+      '#options' => $sports_name_array,
+    ];
+
+    parent::buildOptionsForm($form, $form_state);
   }
 
 }
