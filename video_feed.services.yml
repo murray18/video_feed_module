@@ -1,5 +1,0 @@
-services:
-  video_feed_client:
-    class: Drupal\video_feed\VideoFeedClient
-    arguments:
-      - '@http_client_factory'
