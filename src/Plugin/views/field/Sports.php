@@ -20,7 +20,6 @@ class Sports extends FieldPluginBase {
 
     if ($sports) {
       return [
-        '#title' => t('Sports'),
         '#theme' => 'item_list',
         '#items' => $sports,
       ];

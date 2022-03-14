@@ -20,7 +20,6 @@ class Schools extends FieldPluginBase {
 
     if ($schools) {
       return [
-        '#title' => t('Schools'),
         '#theme' => 'item_list',
         '#items' => $schools,
       ];
