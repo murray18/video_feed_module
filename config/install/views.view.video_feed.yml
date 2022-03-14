@@ -409,8 +409,7 @@ display:
       query:
         type: views_query
         options:
-          vod_display_number: '5'
-          sport: '52'
+          vod_display_number: '10'
       relationships: {  }
       header: {  }
       footer: {  }
