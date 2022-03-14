@@ -19,11 +19,9 @@
         type: 'POST',
         dataType: 'json',
         success: function (response) {
-          console.log('SUCCESS!')
-          console.log(response)
           if(response.hasOwnProperty('block')) {
+            console.log('Loading VOD data from pac 12 backend.')
             const parsedHtml = $.parseHTML(response.block['#markup']);
-            console.log(parsedHtml)
             $("#video-feed-target").replaceWith(parsedHtml);
           }
         }

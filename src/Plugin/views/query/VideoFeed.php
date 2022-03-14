@@ -3,6 +3,7 @@
 namespace Drupal\video_feed\Plugin\views\query;
 
 use Drupal\views\Plugin\views\query\QueryPluginBase;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\views\ViewExecutable;
 use Drupal\views\ResultRow;
 use GuzzleHttp\ClientInterface;
@@ -29,7 +30,8 @@ class VideoFeed extends QueryPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function __construct(ClientInterface $http_client) {
+  public function __construct(ClientInterface $http_client, LoggerChannelFactoryInterface $factory) {
+    $this->loggerFactory = $factory;
     $this->httpClient = $http_client;
   }
 
@@ -38,12 +40,15 @@ class VideoFeed extends QueryPluginBase {
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
-      $container->get('http_client')
+      $container->get('http_client'),
+      $container->get('logger.factory')
     );
   }
 
   /**
-   * Writes an .htaccess file in the given directory, if it doesn't exist.
+   * Part of views core assumes a SQL backend.
+   *
+   * We are using a Query Plugin backend instead so we need this work around.
    *
    * @param string $table
    *   The table.
@@ -58,7 +63,9 @@ class VideoFeed extends QueryPluginBase {
   }
 
   /**
-   * Writes an .htaccess file in the given directory, if it doesn't exist.
+   * Part of views core assumes a SQL backend.
+   *
+   * We are using a Query Plugin backend instead so we need this work around.
    *
    * @param string $table
    *   The table.
@@ -81,17 +88,27 @@ class VideoFeed extends QueryPluginBase {
    */
   public function execute(ViewExecutable $view) {
 
-    // Sleep for 5 seconds to demonstrate the ajax capabilities.
-    sleep(5);
+    // Sleep for 2 seconds to demonstrate the ajax capabilities.
+    sleep(2);
 
-    $request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/vod');
-    $videos = json_decode($request->getBody()->getContents());
+    // @todo It might make sense to put these API calls into their own service
+    // in case there's cause to reuse them elsewhere.
+    try {
+      // This is being logged 8 times per request. Why?
+      $this->loggerFactory->get('video_feed')->info('Hit the pac 12 API');
+      $request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/vod');
+      $videos = json_decode($request->getBody()->getContents());
 
-    $schools_request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/schools');
-    $schools = json_decode($schools_request->getBody()->getContents());
+      $schools_request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/schools');
+      $schools = json_decode($schools_request->getBody()->getContents());
 
-    $sports_request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/sports');
-    $sports = json_decode($sports_request->getBody()->getContents());
+      $sports_request = $this->httpClient->request('GET', 'http://api.pac-12.com/v3/sports');
+      $sports = json_decode($sports_request->getBody()->getContents());
+    }
+    catch (Exception $e) {
+      $message = 'There was an issue accessing an API endpoint. @error';
+      $this->loggerFactory->get('video_feed')->error($message, $e);
+    }
 
     if ($videos->programs) {
       $index = 0;
